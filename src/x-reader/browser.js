@@ -1,3 +1,6 @@
+const { execFile } = require('child_process');
+const { promisify } = require('util');
+const execFileAsync = promisify(execFile);
 const { buildDiscussionSummary, normalizeXUrl } = require('./index');
 
 async function readXThreadWithBrowser(url) {
@@ -21,25 +24,27 @@ async function readXThreadWithBrowser(url) {
 }
 
 async function fetchViaOpenClawBrowser(url) {
-  const base = process.env.OPENCLAW_BROWSER_BASE_URL || 'http://127.0.0.1:18789';
-  const target = `${base}/api/browser/snapshot?url=${encodeURIComponent(url)}`;
-
   try {
-    const response = await fetch(target, {
-      headers: {
-        Accept: 'application/json'
-      }
-    });
-
-    if (!response.ok) {
-      return { ok: false, error: `Browser snapshot failed with ${response.status}` };
-    }
-
-    const data = await response.json();
-    return { ok: true, snapshot: data };
+    await runBrowser(['start']);
+    await runBrowser(['open', url]);
+    await runBrowser(['wait', '--time', '3000']);
+    const snapshot = await runBrowser(['snapshot', '--json']);
+    return { ok: true, snapshot: JSON.parse(snapshot.stdout || '{}') };
   } catch (error) {
-    return { ok: false, error: `Browser snapshot request failed: ${error.message}` };
+    return { ok: false, error: `Browser extraction failed: ${error.message}` };
   }
+}
+
+async function runBrowser(args) {
+  return execFileAsync('openclaw', ['browser', ...args], {
+    timeout: 45000,
+    maxBuffer: 1024 * 1024 * 4,
+    env: {
+      ...process.env,
+      NO_COLOR: '1',
+      FORCE_COLOR: '0'
+    }
+  });
 }
 
 function extractFromSnapshot(url, snapshot) {
@@ -48,6 +53,7 @@ function extractFromSnapshot(url, snapshot) {
   const handleMatch = candidates.join('\n').match(/@([A-Za-z0-9_]{1,15})/);
   const replies = candidates
     .filter((line) => line !== postText)
+    .filter((line) => !/^Home$|^Explore$|^Notifications$|^Messages$/i.test(line))
     .slice(0, 5)
     .map((line, index) => ({
       id: `reply-${index + 1}`,
@@ -71,15 +77,15 @@ function extractFromSnapshot(url, snapshot) {
 function collectTextCandidates(snapshot) {
   if (!snapshot) return [];
 
-  if (Array.isArray(snapshot.lines)) {
-    return snapshot.lines.map((line) => String(line).trim()).filter(Boolean);
-  }
-
   if (Array.isArray(snapshot.items)) {
     return snapshot.items
-      .map((item) => item?.text || item?.name || '')
-      .map((line) => String(line).trim())
+      .flatMap((item) => [item?.text, item?.name, item?.description])
+      .map((line) => String(line || '').trim())
       .filter(Boolean);
+  }
+
+  if (Array.isArray(snapshot.lines)) {
+    return snapshot.lines.map((line) => String(line).trim()).filter(Boolean);
   }
 
   if (typeof snapshot.text === 'string') {
@@ -95,4 +101,4 @@ function inferReplyHandle(line, fallback, index) {
   return index === 0 ? fallback : null;
 }
 
-module.exports = { readXThreadWithBrowser, extractFromSnapshot };
+module.exports = { readXThreadWithBrowser, extractFromSnapshot, collectTextCandidates };
