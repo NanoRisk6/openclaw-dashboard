@@ -1,0 +1,15 @@
+{
+  "name": "clawops",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Lean internal ops layer for OpenClaw",
+  "main": "src/index.js",
+  "scripts": {
+    "dev": "node src/index.js",
+    "start": "NODE_ENV=production node src/index.js",
+    "collect": "node src/index.js --collect-once"
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}
