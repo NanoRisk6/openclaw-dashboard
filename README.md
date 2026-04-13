@@ -86,3 +86,15 @@ ClawOps now also surfaces strict mode support for:
 - `agents.defaults.embeddedPi.executionContract = "strict-agentic"`
 
 It appears in snapshot data, the dashboard, and the bundled Codex plugin setup flow.
+
+
+## Status
+ClawOps currently includes:
+- Codex harness visibility
+- bundled Codex plugin scaffolding
+- strict mode visibility
+- Memory Palace and active memory scaffolding
+- a lightweight dashboard and JSON API
+
+## CI
+GitHub Actions now runs a lightweight smoke-test pipeline on pushes and pull requests.
