@@ -27,7 +27,7 @@ async function fetchViaOpenClawBrowser(url) {
   try {
     await runBrowser(['start']);
     await runBrowser(['open', url]);
-    await runBrowser(['wait', '--time', '3000']);
+    await runBrowser(['wait', '3000']);
     const snapshot = await runBrowser(['snapshot', '--json']);
     return { ok: true, snapshot: JSON.parse(snapshot.stdout || '{}') };
   } catch (error) {
