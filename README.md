@@ -115,3 +115,18 @@ Dependency review:
 
 Release flow:
 - push tags like `v0.1.0` to trigger the release workflow
+
+
+## Browser-first X reader
+ClawOps includes early scaffolding for a browser-first X reader flow.
+
+Goal:
+- paste an `x.com` link
+- open it in a real browser session
+- capture the post, visible thread context, and surrounding replies
+- turn that into a clean discussion view
+
+Current state:
+- URL normalization and browser-reader planning are implemented in `src/x-reader/`
+- primary path is browser-first
+- fallback path can later use the installed `xurl` skill/API tooling
