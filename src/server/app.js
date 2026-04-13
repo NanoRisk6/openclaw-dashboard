@@ -1,5 +1,7 @@
 const express = require('express');
 const { getLatestSnapshot, getMemoryPalace } = require('../state/store');
+const { buildBrowserReaderPlan, buildDiscussionSummary, normalizeXUrl } = require('../x-reader');
+const { readXThreadWithBrowser } = require('../x-reader/browser');
 
 function createApp(config) {
   const app = express();
@@ -20,6 +22,23 @@ function createApp(config) {
 
   app.get('/api/plugins/codex', async (_req, res) => {
     res.json(config.plugins?.codex || null);
+  });
+
+  app.get('/api/x-reader', async (req, res) => {
+    const url = normalizeXUrl(req.query?.url);
+    if (!url) {
+      res.status(400).json({ ok: false, error: 'Invalid X/Twitter URL' });
+      return;
+    }
+
+    const plan = buildBrowserReaderPlan(url);
+    const result = await readXThreadWithBrowser(url);
+    if (!result.ok) {
+      res.status(502).json({ ok: false, plan, error: result.error });
+      return;
+    }
+
+    res.json({ ok: true, plan, discussion: buildDiscussionSummary(result.raw), raw: result.raw });
   });
 
   app.get('/', async (_req, res) => {
