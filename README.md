@@ -98,3 +98,20 @@ ClawOps currently includes:
 
 ## CI
 GitHub Actions now runs a lightweight smoke-test pipeline on pushes and pull requests.
+
+
+## GitHub hardening
+Recommended branch protection for `main`:
+- require pull requests before merging
+- require 1 approval
+- require status checks to pass (`ci / test`)
+- require branches to be up to date before merging
+- block force pushes
+- block deletions
+
+Dependency review:
+- `npm audit`: 0 known vulnerabilities at time of hardening
+- keep `npm ci` in CI for deterministic installs
+
+Release flow:
+- push tags like `v0.1.0` to trigger the release workflow
