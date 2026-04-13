@@ -1,5 +1,6 @@
 const express = require('express');
 const { getLatestSnapshot, getMemoryPalace } = require('../state/store');
+const { buildBrowserReaderPlan, buildDiscussionSummary, normalizeXUrl } = require('../x-reader');
 
 function createApp(config) {
   const app = express();
@@ -20,6 +21,27 @@ function createApp(config) {
 
   app.get('/api/plugins/codex', async (_req, res) => {
     res.json(config.plugins?.codex || null);
+  });
+
+  app.get('/api/x-reader', async (req, res) => {
+    const url = normalizeXUrl(req.query?.url);
+    if (!url) {
+      res.status(400).json({ ok: false, error: 'Invalid X/Twitter URL' });
+      return;
+    }
+
+    const plan = buildBrowserReaderPlan(url);
+    const discussion = buildDiscussionSummary({
+      url,
+      post: {
+        id: null,
+        text: 'Browser extraction route is ready. Live browser capture can populate this object.',
+        author: { handle: null }
+      },
+      replies: []
+    });
+
+    res.json({ ok: true, plan, discussion });
   });
 
   app.get('/', async (_req, res) => {
